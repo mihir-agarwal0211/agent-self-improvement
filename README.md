@@ -2,6 +2,8 @@
 
 **Drift detection and automated self-improvement for AI agents.**
 
+Built by Rohan, Logan Rudd, Mihir Agarwal and Yiwen at the AI Engineer World's Fair Hackathon 2026. Original repo: [loganrudd/agent-self-improvement](https://github.com/loganrudd/agent-self-improvement).
+
 A text-to-SQL agent runs in "production" against the [Spider](https://yale-lily.github.io/spider)
 benchmark. When its accuracy **drifts** as queries get harder, the system detects the
 degradation, makes the agent **learn from its own failures** — a teacher model turns the
@@ -234,12 +236,29 @@ Local-only by design, but the architecture scales horizontally without redesign:
 stages behind frozen contracts, per-channel detectors, Ray fan-out for parallel training. 
 The same shape generalizes from one agent to hundreds of independent telemetry channels.
 
+## My contribution
+
+*Mihir Agarwal, Correction / learning stage ([`correction/`](correction/)).*
+
+I owned the stage that turns a `DriftEvent` into learning. For each failing case, the teacher
+model (MiniMax-M3) generates corrected SQL against the database schema. That SQL is accepted
+only if it executes to the same result set as the gold query; otherwise it is discarded and the
+gold SQL is used instead, so every injected example is known to be correct. Examples are drawn
+only from the LEARN pool, which is split by database from the HELD-OUT benchmark pool, and a
+few anti-forgetting anchors (easy successes) are added so learning hard queries doesn't break
+easy ones. The output is a `CorrectionAction` whose examples are appended to
+`AgentConfig.few_shot_examples`: the feedback loop is data, not weights. In the demo run this
+produced 10 examples (3 teacher-verified, 5 gold-fallback, 2 anchors), and of the 7 held-out
+questions whose outcome changed, 7 improved and 0 regressed.
+
 ## Team
+
+Four equal contributors, one stage each, built together over 24 hours:
 
 | Stage | Owner |
 |-------|-------|
 | Harness / telemetry | Rohan |
-| Detector | Logan |
-| Correction / learning | Mihir |
+| Detector | Logan Rudd |
+| Correction / learning | Mihir Agarwal |
 | Viewer | Yiwen |
 </content>
